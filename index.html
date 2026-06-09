@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>login</title>
+</head>
+<body>
+<form>
+    <div>email : <input type="email" id="signUpEmail"/></div>
+    <div>password : <input type="password" id="signUpPassword"/></div>
+    <button type="submit" id="signUpButton">회원가입 하기</button>
+</form>
+<br/><br/>
+<form>
+    <div>email : <input type="email" id="signInEmail"/></div>
+    <div>password : <input type="password" id="signInPassword"/></div>
+    <button type="submit" id="signInButton">로그인 하기</button>
+</form>
+
+<br/><br/>
+<button id="googleLogin">구글 아이디로 로그인</button>
+<br/><br/><br/>
+
+<!-- <form>
+  핸드폰 번호 : <input id="phoneNumber" />
+  <button id="phoneNumberButton">핸드폰 번호 전송</button>
+</form>
+<br /><br />
+<form>
+  확인 코드 : <input id="confirmCode" />
+  <button id="confrimCodeButton">확인 코드 전송</button>
+</form> -->
+
+<script type="module">
+    import {initializeApp} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+
+    const firebaseConfig = {
+        apiKey           : "AIzaSyBF93j-EDjf4G6BCyxuw2MWF5lSm-h6F4I",
+        authDomain       : "templogin-2bdf9.firebaseapp.com",
+        projectId        : "templogin-2bdf9",
+        storageBucket    : "templogin-2bdf9.firebasestorage.app",
+        messagingSenderId: "156774899809",
+        appId            : "1:156774899809:web:0b8575be72c4837df30a20",
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    import {
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        GoogleAuthProvider,
+        signInWithPhoneNumber,
+        signInWithPopup,
+        RecaptchaVerifier,
+    } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    auth.languageCode = "ko";
+
+    document
+    .getElementById("signUpButton")
+    .addEventListener("click", (event) => {
+        event.preventDefault();
+        const signUpEmail = document.getElementById("signUpEmail").value;
+        const signUpPassword =
+                  document.getElementById("signUpPassword").value;
+
+        createUserWithEmailAndPassword(auth, signUpEmail, signUpPassword)
+        .then((userCredential) => {
+            // Signed up
+            console.log(userCredential);
+            const user = userCredential.user;
+            console.log(user);
+            // ...
+        })
+        .catch((error) => {
+            console.log("회원가입 실패");
+            console.log(error.code);
+            console.log(error.message);
+            // ..
+        });
+    });
+
+    document
+    .getElementById("signInButton")
+    .addEventListener("click", (event) => {
+        event.preventDefault();
+        const signInEmail = document.getElementById("signInEmail").value;
+        const signInPassword =
+                  document.getElementById("signInPassword").value;
+        signInWithEmailAndPassword(auth, signInEmail, signInPassword)
+        .then((userCredential) => {
+            // Signed in
+            console.log(userCredential);
+            const user = userCredential.user;
+            // ...
+        })
+        .catch((error) => {
+            console.log("로그인 실패");
+            const errorCode = error.code;
+            const errorMessage = error.message;
+        });
+    });
+
+    document.getElementById("googleLogin").addEventListener("click", () => {
+        signInWithPopup(auth, provider)
+        .then((result) => {
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const token = credential.accessToken;
+            // The signed-in user info.
+            const user = result.user;
+            console.log(result);
+            // ...
+        })
+        .catch((error) => {
+            // Handle Errors here.
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // The email of the user's account used.
+            const email = error.customData.email;
+            // The AuthCredential type that was used.
+            const credential = GoogleAuthProvider.credentialFromError(error);
+            console.log(error);
+            // ...
+        });
+    });
+
+    window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "phoneNumberButton",
+        {
+            size    : "invisible",
+            callback: (response) => {
+                // reCAPTCHA solved, allow signInWithPhoneNumber.
+                onSignInSubmit();
+            },
+        },
+    );
+
+    document
+    .getElementById("phoneNumberButton")
+    .addEventListener("click", (event) => {
+        event.preventDefault();
+
+        let phoneNumber = document.getElementById("phoneNumber").value;
+
+        phoneNumber = phoneNumber.replace(/[^0-9]/g, "").replace(/^0/, "");
+
+        phoneNumber = "+82" + phoneNumber;
+
+        const appVerifier = window.recaptchaVerifier;
+
+        signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+        .then((confirmationResult) => {
+            window.confirmationResult = confirmationResult;
+            console.log("SMS 전송 성공");
+            console.log(confirmationResult);
+        })
+        .catch((error) => {
+            console.log("SMS 전송 실패");
+            console.log(error.code);
+            console.log(error.message);
+        });
+    });
+
+    document
+    .getElementById("confrimCodeButton")
+    .addEventListener("click", (event) => {
+        event.preventDefault();
+        const code = document.getElementById("confirmCode").value;
+        confirmationResult
+        .confirm(code)
+        .then((result) => {
+            // User signed in successfully.
+            const user = result.user;
+            console.log(result);
+            // ...
+        })
+        .catch((error) => {
+            console.log(error);
+            // User couldn't sign in (bad verification code?)
+            // ...
+        });
+    });
+</script>
+</body>
+</html>
