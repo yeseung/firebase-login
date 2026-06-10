@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Realtime Database Employee List</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-3">
+    <h2>Employee List</h2>
+
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Department</th>
+            <th>Can Swim</th>
+            <th>CNIC No</th>
+        </tr>
+        </thead>
+        <tbody id="tbody1"></tbody>
+    </table>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+
+    import {
+        getDatabase,
+        ref,
+        child,
+        get,
+        onValue
+    } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBCN-yOjN0CYjdskON8kOzELYELQ8zRMm8",
+        authDomain: "temp-crud-85ba9.firebaseapp.com",
+        databaseURL: "https://temp-crud-85ba9-default-rtdb.firebaseio.com",
+        projectId: "temp-crud-85ba9",
+        storageBucket: "temp-crud-85ba9.firebasestorage.app",
+        messagingSenderId: "990504243112",
+        appId: "1:990504243112:web:69f2117ad0ffc9ca1f579d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let rowNo = 0;
+    const tbody = document.getElementById("tbody1");
+
+    function AddItemToTable(fName, lName, department, canSwim, cNo) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+      <td>${++rowNo}</td>
+      <td>${fName}</td>
+      <td>${lName}</td>
+      <td>${department}</td>
+      <td>${canSwim ? "Yes" : "No"}</td>
+      <td>${cNo}</td>
+    `;
+
+        tbody.appendChild(tr);
+    }
+
+    function AddAllItemsToTable(employees) {
+        rowNo = 0;
+        tbody.innerHTML = "";
+
+        employees.forEach(emp => {
+            AddItemToTable(
+                emp.nameofemployee?.firstname || "",
+                emp.nameofemployee?.lastname || "",
+                emp.department || "",
+                emp.canswim || false,
+                emp.cnic || ""
+            );
+        });
+    }
+
+    async function GetAllDataOnce() {
+        try {
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, "EmployeeSet"));
+
+            const employees = [];
+
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnapshot => {
+                    employees.push(childSnapshot.val());
+                });
+            }
+
+            AddAllItemsToTable(employees);
+
+        } catch (error) {
+            console.error(error);
+            alert("데이터를 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+
+    function GetAllDataRealtime() {
+        const dbRef = ref(db, "EmployeeSet");
+
+        onValue(dbRef, (snapshot) => {
+            const employees = [];
+
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnapshot => {
+                    employees.push(childSnapshot.val());
+                });
+            }
+
+            AddAllItemsToTable(employees);
+        });
+    }
+
+    window.addEventListener(
+        "load",
+        GetAllDataRealtime
+    );
+</script>
+
+</body>
+</html>
