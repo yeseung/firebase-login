@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>firebase v12 crud</title>
+
+    <style>
+        label {
+            display: inline-block;
+            font-size: 16px;
+            font-family: Arial, Helvetica, sans-serif;
+            width: 110px;
+        }
+
+        input,
+        select {
+            width: 180px;
+            height: 30px;
+            font-size: 16px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        button {
+            height: 30px;
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+
+<label>First Name</label>
+<input type="text" id="FnameInp">
+<br><br>
+
+<label>Last Name</label>
+<input type="text" id="LnameInp">
+<br><br>
+
+<label>Department</label>
+<select id="DeptInp">
+    <option value="Development">Development</option>
+    <option value="Testing">Testing</option>
+    <option value="Management">Management</option>
+    <option value="Administration">Administration</option>
+</select>
+<br><br>
+
+<label>Can Swim</label>
+<select id="SwimInp">
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+</select>
+<br><br>
+
+<label>CNIC No</label>
+<input type="number" id="CnicInp">
+<br><br>
+
+<button id="AddBtn">Add</button>
+<button id="RetBtn">Retrieve</button>
+<button id="UpdBtn">Update</button>
+<button id="DelBtn">Delete</button>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import {
+        getDatabase,
+        ref,
+        child,
+        get,
+        set,
+        update,
+        remove
+    } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBCN-yOjN0CYjdskON8kOzELYELQ8zRMm8",
+        authDomain: "temp-crud-85ba9.firebaseapp.com",
+        databaseURL: "https://temp-crud-85ba9-default-rtdb.firebaseio.com",
+        projectId: "temp-crud-85ba9",
+        storageBucket: "temp-crud-85ba9.firebasestorage.app",
+        messagingSenderId: "990504243112",
+        appId: "1:990504243112:web:69f2117ad0ffc9ca1f579d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const FnameInp = document.getElementById('FnameInp');
+    const LnameInp = document.getElementById('LnameInp');
+    const DeptInp = document.getElementById('DeptInp');
+    const SwimInp = document.getElementById('SwimInp');
+    const CnicInp = document.getElementById('CnicInp');
+
+    const AddBtn = document.getElementById('AddBtn');
+    const RetBtn = document.getElementById('RetBtn');
+    const UpdBtn = document.getElementById('UpdBtn');
+    const DelBtn = document.getElementById('DelBtn');
+
+    function AddData() {
+        if (!CnicInp.value) {
+            alert("CNIC No를 입력하세요.");
+            return;
+        }
+
+        set(ref(db, 'EmployeeSet/' + CnicInp.value), {
+            nameofemployee: {
+                firstname: FnameInp.value,
+                lastname: LnameInp.value
+            },
+            department: DeptInp.value,
+            canswim: SwimInp.value === "yes",
+            cnic: Number(CnicInp.value)
+        })
+        .then(() => {
+            alert("Data Added Successfully");
+        })
+        .catch((error) => {
+            alert("Unsuccessful");
+            console.log(error);
+        });
+    }
+
+    function RetData() {
+        if (!CnicInp.value) {
+            alert("CNIC No를 입력하세요.");
+            return;
+        }
+
+        const dbRef = ref(db);
+
+        get(child(dbRef, 'EmployeeSet/' + CnicInp.value))
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+
+                FnameInp.value = data.nameofemployee.firstname;
+                LnameInp.value = data.nameofemployee.lastname;
+                DeptInp.value = data.department;
+                SwimInp.value = data.canswim ? "yes" : "no";
+            } else {
+                alert("Employee does not exist");
+            }
+        })
+        .catch((error) => {
+            alert("Unsuccessful");
+            console.log(error);
+        });
+    }
+
+    function UpdateData() {
+        if (!CnicInp.value) {
+            alert("CNIC No를 입력하세요.");
+            return;
+        }
+
+        update(ref(db, 'EmployeeSet/' + CnicInp.value), {
+            nameofemployee: {
+                firstname: FnameInp.value,
+                lastname: LnameInp.value
+            },
+            department: DeptInp.value,
+            canswim: SwimInp.value === "yes"
+        })
+        .then(() => {
+            alert("Data Updated Successfully");
+        })
+        .catch((error) => {
+            alert("Unsuccessful");
+            console.log(error);
+        });
+    }
+
+    function DeleteData() {
+        if (!CnicInp.value) {
+            alert("CNIC No를 입력하세요.");
+            return;
+        }
+
+        remove(ref(db, 'EmployeeSet/' + CnicInp.value))
+        .then(() => {
+            alert("Data Deleted Successfully");
+        })
+        .catch((error) => {
+            alert("Unsuccessful");
+            console.log(error);
+        });
+    }
+
+    AddBtn.addEventListener('click', AddData);
+    RetBtn.addEventListener('click', RetData);
+    UpdBtn.addEventListener('click', UpdateData);
+    DelBtn.addEventListener('click', DeleteData);
+</script>
+
+</body>
+</html>
