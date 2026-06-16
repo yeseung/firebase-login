@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase CRUD Table</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+            background: #f5f6f8;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 30px 16px;
+        }
+
+        .header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #06254B;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #06254B;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            height: 42px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #06254B;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        button {
+            height: 42px;
+            padding: 0 16px;
+            border: 0;
+            border-radius: 10px;
+            background: #06254B;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-gray {
+            background: #6b7280;
+        }
+
+        .btn-red {
+            background: #dc2626;
+        }
+
+        .result-box {
+            margin-top: 14px;
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            text-align: left;
+            min-height: 70px;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .table-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .table-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            color: #06254B;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 13px 14px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 800;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .empty {
+            padding: 30px;
+            text-align: center;
+            color: #888;
+        }
+
+        .small-btn {
+            height: 32px;
+            padding: 0 10px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-wrap {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 620px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header class="header">
+        <h1>Firebase CRUD Table</h1>
+        <p>Realtime Database 등록 · 조회 · 수정 · 삭제 · 목록 테이블</p>
+    </header>
+
+    <section class="grid">
+
+        <div class="card">
+            <h2>정보 입력</h2>
+
+            <div class="form-group">
+                <label for="enterID">ID</label>
+                <input id="enterID" type="text" placeholder="예: user01">
+            </div>
+
+            <div class="form-group">
+                <label for="enterName">Name</label>
+                <input id="enterName" type="text" placeholder="이름 입력">
+            </div>
+
+            <div class="form-group">
+                <label for="enterAge">Age</label>
+                <input id="enterAge" type="number" placeholder="나이 입력">
+            </div>
+
+            <div class="button-group">
+                <button id="insert">등록</button>
+                <button id="update" class="btn-gray">수정</button>
+                <button id="remove" class="btn-red">삭제</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>ID로 검색</h2>
+
+            <div class="form-group">
+                <label for="findID">ID</label>
+                <input id="findID" type="text" placeholder="검색할 ID 입력">
+            </div>
+
+            <div class="button-group">
+                <button id="find">검색</button>
+            </div>
+
+            <div class="result-box">
+                <div id="findName">Name: -</div>
+                <div id="findAge">Age: -</div>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="table-card">
+        <div class="table-header">
+            <h2>People 목록</h2>
+            <button id="refresh" class="small-btn">새로고침</button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>No</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>관리</th>
+                </tr>
+                </thead>
+                <tbody id="peopleTableBody">
+                <tr>
+                    <td colspan="5" class="empty">데이터를 불러오는 중입니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import {
+        getDatabase,
+        ref,
+        get,
+        set,
+        child,
+        update,
+        remove,
+        onValue
+    } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBCN-yOjN0CYjdskON8kOzELYELQ8zRMm8",
+        authDomain: "temp-crud-85ba9.firebaseapp.com",
+        databaseURL: "https://temp-crud-85ba9-default-rtdb.firebaseio.com",
+        projectId: "temp-crud-85ba9",
+        storageBucket: "temp-crud-85ba9.firebasestorage.app",
+        messagingSenderId: "990504243112",
+        appId: "1:990504243112:web:69f2117ad0ffc9ca1f579d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const enterID = document.querySelector("#enterID");
+    const enterName = document.querySelector("#enterName");
+    const enterAge = document.querySelector("#enterAge");
+
+    const findID = document.querySelector("#findID");
+    const findName = document.querySelector("#findName");
+    const findAge = document.querySelector("#findAge");
+
+    const insertBtn = document.querySelector("#insert");
+    const updateBtn = document.querySelector("#update");
+    const removeBtn = document.querySelector("#remove");
+    const findBtn = document.querySelector("#find");
+    const refreshBtn = document.querySelector("#refresh");
+
+    const peopleTableBody = document.querySelector("#peopleTableBody");
+
+    function getEnterData() {
+        return {
+            id: enterID.value.trim(),
+            name: enterName.value.trim(),
+            age: enterAge.value.trim()
+        };
+    }
+
+    function clearForm() {
+        enterID.value = "";
+        enterName.value = "";
+        enterAge.value = "";
+    }
+
+    function InsertData() {
+        const data = getEnterData();
+
+        if (!data.id || !data.name || !data.age) {
+            alert("ID, Name, Age를 모두 입력하세요.");
+            return;
+        }
+
+        set(ref(db, "People/" + data.id), {
+            ID: data.id,
+            Name: data.name,
+            Age: Number(data.age)
+        })
+        .then(() => {
+            alert("등록되었습니다.");
+            clearForm();
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+    }
+
+    function FindData() {
+        const id = findID.value.trim();
+
+        if (!id) {
+            alert("검색할 ID를 입력하세요.");
+            return;
+        }
+
+        get(child(ref(db), "People/" + id))
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+
+                findName.innerHTML = "Name: " + data.Name;
+                findAge.innerHTML = "Age: " + data.Age;
+            } else {
+                findName.innerHTML = "Name: -";
+                findAge.innerHTML = "Age: -";
+                alert("데이터가 없습니다.");
+            }
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+    }
+
+    function UpdateData() {
+        const data = getEnterData();
+
+        if (!data.id) {
+            alert("수정할 ID를 입력하세요.");
+            return;
+        }
+
+        if (!data.name || !data.age) {
+            alert("Name, Age를 입력하세요.");
+            return;
+        }
+
+        update(ref(db, "People/" + data.id), {
+            Name: data.name,
+            Age: Number(data.age)
+        })
+        .then(() => {
+            alert("수정되었습니다.");
+            clearForm();
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+    }
+
+    function RemoveData() {
+        const id = enterID.value.trim();
+
+        if (!id) {
+            alert("삭제할 ID를 입력하세요.");
+            return;
+        }
+
+        if (!confirm("정말 삭제하시겠습니까?")) {
+            return;
+        }
+
+        remove(ref(db, "People/" + id))
+        .then(() => {
+            alert("삭제되었습니다.");
+            clearForm();
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+    }
+
+    function LoadTable() {
+        const peopleRef = ref(db, "People");
+
+        onValue(peopleRef, (snapshot) => {
+            peopleTableBody.innerHTML = "";
+
+            if (!snapshot.exists()) {
+                peopleTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty">등록된 데이터가 없습니다.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let index = 1;
+
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${index}</td>
+                    <td>${data.ID || childSnapshot.key}</td>
+                    <td>${data.Name || ""}</td>
+                    <td>${data.Age || ""}</td>
+                    <td>
+                        <button class="small-btn btn-gray" data-id="${data.ID || childSnapshot.key}">선택</button>
+                    </td>
+                `;
+
+                peopleTableBody.appendChild(tr);
+                index++;
+            });
+        });
+    }
+
+    function SelectTableData(id) {
+        get(child(ref(db), "People/" + id))
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+
+                enterID.value = data.ID || id;
+                enterName.value = data.Name || "";
+                enterAge.value = data.Age || "";
+            }
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+    }
+
+    insertBtn.addEventListener("click", InsertData);
+    updateBtn.addEventListener("click", UpdateData);
+    removeBtn.addEventListener("click", RemoveData);
+    findBtn.addEventListener("click", FindData);
+    refreshBtn.addEventListener("click", LoadTable);
+
+    peopleTableBody.addEventListener("click", function (event) {
+        if (event.target.tagName === "BUTTON") {
+            const id = event.target.dataset.id;
+            SelectTableData(id);
+        }
+    });
+
+    LoadTable();
+</script>
+
+</body>
+</html>
