@@ -280,6 +280,48 @@
     const usernameInput = document.getElementById("username");
     const messageInput = document.getElementById("message");
 
+
+    const nCho  = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]; // 19
+    const nJung = [1,1,1,1,1,1,1,1,1,2,2,2,1,1,2,2,2,1,1,2,1]; // 21
+    const nJong = [0,1,1,2,1,2,2,1,1,2,2,2,2,2,2,2,1,1,2,1,1,1,1,1,1,1,1,1]; // 28
+    const DV = 21 * 28;
+
+    let typingStartTime = 0;
+
+    function calcTotalStrokes(str){
+        let tn = 0;
+        for(let i=0;i<str.length;i++){
+            let code = str.charCodeAt(i);
+            if(code < 200){ tn++; continue; }        // ASCII/숫자/기호
+            code -= 0xAC00;
+            if(code < 0){ tn++; continue; }          // 한글 외 영역
+            const cho = Math.floor(code / DV); code %= DV;
+            const jung = Math.floor(code / 28);
+            const jong = code % 28;
+            tn += (nCho[cho]||1) + (nJung[jung]||1) + (nJong[jong]||0);
+        }
+        return tn;
+    }
+
+    messageInput.addEventListener("input", () => {
+        if (!typingStartTime && messageInput.value.length > 0) {
+            typingStartTime = performance.now();
+        }
+
+        if (messageInput.value.length === 0) {
+            typingStartTime = 0;
+        }
+    });
+
+    function getTypingSpeed(text) {
+        if (!typingStartTime) return 0;
+
+        const elapsed = Math.max(1, performance.now() - typingStartTime);
+        const tn = calcTotalStrokes(text);
+
+        return Math.floor((tn * 60000) / elapsed);
+    }
+
     function createRandomName() {
         return "사용자" + Math.floor(Math.random() * 100000);
     }
@@ -342,27 +384,30 @@
             return;
         }
 
-        const messageText = message.startsWith("re")
-            ? message.slice(2).trim()
-            : message;
-
-        if (!messageText) {
-            return;
-        }
+        // const messageText = message.startsWith("re")
+        //     ? message.slice(2).trim()
+        //     : message;
+        //
+        // if (!messageText) {
+        //     return;
+        // }
 
         await push(ref(db, "messages1"), {
             username,
-            message  : messageText,
-            timestamp: Date.now()
+            message  : message,
+            timestamp: Date.now(),
+            speed    : getTypingSpeed(message)
         });
 
         messageInput.value = "";
+        typingStartTime = 0;
         messageInput.focus();
     }
 
     function appendMessage(data) {
         const username = data.username || "";
         const message = data.message || "";
+        const speed = data.speed || 0;
 
         if (!username || !message) {
             return;
@@ -380,7 +425,7 @@
         <div class="bubble-container">
           <div class="name">${escapeHtml(username)}</div>
           <div class="bubble">${urlAutoLink(message)}</div>
-          <div class="timestamp">${formatTimeStamp(data.timestamp)}</div>
+          <div class="timestamp">${formatTimeStamp(data.timestamp)} · ${speed}타/분</div>
         </div>
       `;
 
